@@ -8,12 +8,17 @@ class Frame:
         self.__data_maxsize = data_maxsize
 
         # Initializing fields
-        self.__flag = (ord('z') + 8) & 0xFFFFFFFFFFFFFFFF
+        self.start_delim = 0
+        self.access_control = 0
+        self.frame_control = 0
         self.__dest_addr = 0 & 0xFFFFFFFF
         self.__source_addr = 0 & 0xFFFFFFFF
         self.__data = b""
-        self.__length = len(self.__data) & 0xFFFFFFFF
-        self.__fcs = b''
+        self.length = len(self.data)
+        self.fcs = 0
+        self.end_delim = 0
+        self.frame_status = 0
+        self.inter_frame_gap = 0
 
     @property
     def data(self):
@@ -22,37 +27,50 @@ class Frame:
     @data.setter
     def data(self, data: str):
         self.__data = data.encode('utf-8')
+        self.length = len(self.__data)
 
     @property
-    def fcs(self):
-        return self.__fcs
+    def dest_addr(self):
+        return self.__dest_addr
 
-    @fcs.setter
-    def fcs(self, fcs: bytes):
-        self.__fcs = fcs
+    @dest_addr.setter
+    def dest_addr(self, dest_addr: int):
+        self.__dest_addr = dest_addr # & 0xFFFFFFFF
 
     @property
-    def length(self):
-        return self.__length
+    def source_addr(self):
+        return self.__source_addr
 
-    @length.setter
-    def length(self, length: int):
-        self.__length = length
+    @source_addr.setter
+    def source_addr(self, source_addr: int):
+        self.__source_addr = source_addr # & 0xFFFFFFFF
+
+    def updateFS_bitA(self):
+        self.frame_status = self.frame_status | (1 << 0)
+        self.frame_status = self.frame_status | (1 << 4)
+
+    def updateFS_bitC(self):
+        self.frame_status = self.frame_status | (1 << 1)
+        self.frame_status = self.frame_status | (1 << 5)
+
 
     def pack(self):
-        format_string = 'QIII{}sc'.format(self.__length)
+        format_string = 'BBBII{}sBBBBB'.format(self.length)
 
         return struct.pack(format_string,
-                           self.__flag,
-                           self.__dest_addr,
-                           self.__source_addr,
-                           self.__length,
+                           self.start_delim,
+                           self.access_control,
+                           self.frame_control,
+                           self.dest_addr,
+                           self.source_addr,
                            self.__data,
-                           self.__fcs)
+                           self.length,
+                           self.fcs,
+                           self.end_delim,
+                           self.frame_status,
+                           self.inter_frame_gap)
 
     def unpack(self, data):
-        # print(data)
-        format_string = 'QIII{}sc'.format(len(data) - 21)
+        format_string = 'BBBII{}sBBBBB'.format(len(data) - 17)
+        self.start_delim, self.access_control, self.frame_control, self.dest_addr, self.source_addr, self.__data, self.length, self.fcs, self.end_delim, self.frame_status, self.inter_frame_gap = struct.unpack(format_string, data)
 
-        self.__flag, self.__dest_addr, self.__source_addr, self.__length, self.__data, self.__fcs \
-            = struct.unpack(format_string, data)

@@ -1,6 +1,8 @@
-from window.ControlWindowUi import ControlWindowUi
+from controlwindow.ControlWindowUi import ControlWindowUi
 from Exception import (StationPortsException, StationNumberException, MaxStationNumberException)
-from Station import *
+from PyQt5 import QtWidgets
+
+MAX_STATION_NUMBER = 5
 
 
 def choose_ports(ports):
@@ -87,10 +89,10 @@ class ControlWindow:
         except MaxStationNumberException as e:
             self.UI.txt_debug.append(e.error())
 
-        # create window
+        # create ControlWindow
         else:
             self.UI.txt_debug.append(f"The station with id = {id} has been created")
-            self.UI.bar_maxnumb.setValue(self.UI.bar_maxnumb.value() + 100 / MAX_STATION_NUMBER)
+            self.UI.bar_maxnumb.setValue(self.UI.bar_maxnumb.value() + int(100) / MAX_STATION_NUMBER)
             self.station_dict[id] = [station_number, ports]
             update_station_list(self.station_dict, self.UI.txt_stations)
         finally:
@@ -114,7 +116,7 @@ class ControlWindow:
         except KeyError:
             self.UI.txt_debug.append(f"The station with the number = {station_number} does not exist")
 
-        # delete window
+        # delete ControlWindow
         else:
             self.UI.txt_debug.append(f"The station with id = {id} has been deleted")
             self.UI.bar_maxnumb.setValue(self.UI.bar_maxnumb.value() - 100 / MAX_STATION_NUMBER)
@@ -127,3 +129,13 @@ class ControlWindow:
     def add_function(self):
         self.UI.btn_create.clicked.connect(lambda: self.create_window())
         self.UI.btn_delete.clicked.connect(lambda: self.delete_window())
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    window = QtWidgets.QMainWindow()
+    control_window = ControlWindow()
+    control_window.init_ui(window)
+    window.show()
+    sys.exit(app.exec_())

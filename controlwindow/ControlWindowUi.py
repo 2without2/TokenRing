@@ -139,7 +139,7 @@ class ControlWindowUi(object):
 
     def retranslateUi(self, ControlWindow):
         _translate = QtCore.QCoreApplication.translate
-        ControlWindow.setWindowTitle(_translate("ControlWindow", "MainWindow"))
+        ControlWindow.setWindowTitle(_translate("ControlWindow", "Station creator"))
         self.btn_create.setText(_translate("ControlWindow", "Create"))
         self.btn_delete.setText(_translate("ControlWindow", "Delete"))
         self.lbl_debug.setText(_translate("ControlWindow", "Debug"))

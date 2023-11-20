@@ -5,6 +5,8 @@ class DebugWindowUi(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(528, 632)
+        Form.setMinimumSize(QtCore.QSize(528, 632))
+        Form.setMaximumSize(QtCore.QSize(528, 632))
         Form.setStyleSheet("background-color: rgb(232, 232, 170);")
         self.label_2 = QtWidgets.QLabel(Form)
         self.label_2.setGeometry(QtCore.QRect(180, 10, 91, 31))

@@ -37,32 +37,18 @@ class COMPort:
     def init_flag(self, init_flag: bool):
         self.__init_flag = init_flag
 
-    def InitCOMPort(self):
-        self.__portID = serial.Serial(self.__port_name, baudrate=self.__baudrate)
-        self.__init_flag = True
-
     def CloseCOMPort(self):
         self.__portID.close()
         self.__init_flag = False
 
-    def ReadFromPort(self):
-        data = self.__portID.read(10)
-        return data
-
     def ReadPacketFromPort(self):
-        data = self.__portID.read(36)
+        data = self.__portID.read(32)
         temp_frame: Frame = Frame()
+        accept_flag = False
         if data != b'':
             temp_frame.unpack(data)
-        return temp_frame
-
-    def ReadBytesFromPort(self):
-        data = self.__portID.read(36)
-        return data
-
-    def WriteToPort(self, message: str):
-        sends = bytes(message, 'utf-8')
-        self.__portID.write(sends)
+            accept_flag = True
+        return temp_frame, accept_flag
 
     def WritePacketToPort(self, frame: Frame):
         data = frame.pack()
@@ -71,8 +57,8 @@ class COMPort:
     # Много разных параметров
     def SetParamCOMPort(self):
         try:
-            self.__portID = serial.Serial(self.__port_name, baudrate=self.__baudrate, bytesize=8, parity='N', stopbits=1,
-                                      timeout=1, xonxoff=False, rtscts=False)
+            self.__portID = serial.Serial(self.__port_name, baudrate=self.__baudrate, bytesize=8, parity='N',
+                                          stopbits=1, timeout=1, xonxoff=False, rtscts=False)
             self.__init_flag = True
         except serial.SerialException as e:
             print(f"Error opening COM port: {str(e)}")

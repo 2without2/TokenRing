@@ -22,3 +22,11 @@ class MaxStationNumberException(Exception):
 
     def error(self):
         return f"The maximum number of stations = {self.number} has been reached"
+
+
+class AlreadyStationNumberException(Exception):
+    def __init__(self, station_number):
+        self.station_number = station_number
+
+    def what(self):
+        return f"Station {self.station_number}: The station number is already {self.station_number}"
