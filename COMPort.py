@@ -1,5 +1,6 @@
 import serial
 from Frame import Frame
+from Token import Token
 
 
 class COMPort:
@@ -43,16 +44,37 @@ class COMPort:
 
     def ReadPacketFromPort(self):
         data = self.__portID.read(32)
-        temp_frame: Frame = Frame()
         accept_flag = False
         if data != b'':
-            temp_frame.unpack(data)
             accept_flag = True
-        return temp_frame, accept_flag
+            try:
+                if len(data) <= 5:
+                    token: Token = Token()
+                    token.unpack(data)
+                    return token, accept_flag
+                else:
+                    frame: Frame = Frame()
+                    frame.unpack(data)
+                    return frame, accept_flag
+            except Exception:
+                print(f"{self.__port_name}: Reading failed")
+        return Frame(), accept_flag
 
-    def WritePacketToPort(self, frame: Frame):
-        data = frame.pack()
-        self.__portID.write(data)
+    def WritePacketToPort(self, obj):
+        try:
+            if isinstance(obj, Frame):
+                frame: Frame = obj
+                data = frame.pack()
+                self.__portID.write(data)
+            elif isinstance(obj, Token):
+                token: Token = obj
+                data = token.pack()
+                self.__portID.write(data)
+            else:
+                print(f"{self.__port_name}: Token/Frame error")
+        except Exception:
+            print(f"{self.__port_name}: Recording failed")
+
 
     # Много разных параметров
     def SetParamCOMPort(self):

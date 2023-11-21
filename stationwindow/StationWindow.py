@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
-from PyQt5 import QtCore
 from stationwindow.StationWindowUi import StationWindowUi
 from Station import Station
 from Exception import AlreadyStationNumberException
@@ -72,12 +71,14 @@ class StationWindow(QWidget):
         else:
             while True:
                 if len(text) < 15:
-                    self.station.send_data(text)
+                    self.station.buffer.add(text)
+                    # self.station.send_data(text)
                     break
                 else:
                     text_part = text[0:15]
                     text = text.replace(text_part, "")
-                    self.station.send_data(text_part)
+                    self.station.buffer.add(text_part)
+                    # self.station.send_data(text_part)
         finally:
             self.UI.txt_input.clear()
 
@@ -85,12 +86,49 @@ class StationWindow(QWidget):
         if obj == self.UI.txt_input and event.type() == event.KeyPress:
             if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                 self.get_message()
+                self.station.buffer.print_info()
                 return True
 
         return super().eventFilter(obj, event)
 
+    def generate_token(self):
+        if self.station.isMonitor:
+            if not self.station.init_token:
+                # send token
+                self.station.send_token()
+                self.station.init_token = True
+                self.UI.lbl_token_status.setText("TRUE")
+                self.station.logger("The token has been generated", 2)
+            else:
+                self.station.logger("The token has already been created", 1)
+        else:
+            self.station.logger(f"The station is not a monitor station", 1)
+
+    def delete_token(self):
+        if self.station.isMonitor:
+            if self.station.init_token:
+                self.station.init_token = False
+                self.UI.lbl_token_status.setText("FALSE")
+            else:
+                self.station.logger("The token was not created", 1)
+        else:
+            self.station.logger(f"The station is not a monitor station", 1)
+
+    def get_monitor_flag(self, state):
+        if state == 2:
+            self.station.isMonitor = True
+            self.station.logger(f"Station-Monitor is enable", 1)
+        else:
+            self.station.isMonitor = False
+            self.station.logger(f"Station-Monitor is disable", 1)
+
     def add_function(self):
+        # usually
         self.UI.le_station_number.returnPressed.connect(lambda: self.get_station_number())
         self.UI.le_address.returnPressed.connect(lambda: self.get_address())
         self.UI.cmb_priority.activated.connect(lambda: self.get_priority())
         self.UI.txt_input.installEventFilter(self)
+        # modify
+        self.UI.btn_generate.clicked.connect(lambda: self.generate_token())
+        self.UI.btn_delete.clicked.connect(lambda: self.delete_token())
+        self.UI.chb_monitor.stateChanged.connect(self.get_monitor_flag)
