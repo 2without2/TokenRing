@@ -92,7 +92,7 @@ class ControlWindow:
         # create ControlWindow
         else:
             self.UI.txt_debug.append(f"The station with id = {id} has been created")
-            self.UI.bar_maxnumb.setValue(self.UI.bar_maxnumb.value() + int(100) / MAX_STATION_NUMBER)
+            self.UI.bar_maxnumb.setValue(self.UI.bar_maxnumb.value() + int(100 / MAX_STATION_NUMBER))
             self.station_dict[id] = [station_number, ports]
             update_station_list(self.station_dict, self.UI.txt_stations)
         finally:
