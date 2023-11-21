@@ -12,8 +12,11 @@ class Buffer:
     def add(self, msg):
         self.messages.append(msg)
 
-    def get(self):
+    def pop(self):
         return self.messages.popleft()
+
+    def count(self):
+        return len(self.messages)
 
     def print_info(self):
         print(f"Buffer: {self.messages}")

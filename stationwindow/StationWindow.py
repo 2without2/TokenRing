@@ -27,6 +27,9 @@ class StationWindow(QWidget):
     def update_output_info(self, text):
         self.UI.txt_output.append(text)
 
+    def update_package_count(self, number):
+        self.UI.lbl_package_count.setText(str(number))
+
     def get_station_number(self):
         try:
             number = int(self.UI.le_station_number.text())
@@ -86,7 +89,7 @@ class StationWindow(QWidget):
         if obj == self.UI.txt_input and event.type() == event.KeyPress:
             if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                 self.get_message()
-                self.station.buffer.print_info()
+                self.update_package_count(self.station.buffer.count())
                 return True
 
         return super().eventFilter(obj, event)
