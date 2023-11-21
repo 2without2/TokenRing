@@ -10,7 +10,8 @@ class Buffer:
         return True if len(self.messages) == 0 else False
 
     def add(self, msg):
-        self.messages.append(msg)
+        if msg != '':
+            self.messages.append(msg)
 
     def pop(self):
         return self.messages.popleft()
