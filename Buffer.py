@@ -5,6 +5,7 @@ class Buffer:
 
     def __init__(self):
         self.messages = deque()
+        self.amount: int = 0
 
     def empty(self):
         return True if len(self.messages) == 0 else False
@@ -12,12 +13,14 @@ class Buffer:
     def add(self, msg):
         if msg != '':
             self.messages.append(msg)
+            self.amount += 1
 
     def pop(self):
+        self.amount -= 1
         return self.messages.popleft()
 
     def count(self):
-        return len(self.messages)
+        return self.amount
 
     def print_info(self):
         print(f"Buffer: {self.messages}")

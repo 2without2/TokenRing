@@ -47,17 +47,17 @@ class COMPort:
         accept_flag = False
         if data != b'':
             accept_flag = True
-            try:
-                if len(data) <= 5:
-                    token: Token = Token()
-                    token.unpack(data)
-                    return token, accept_flag
-                else:
-                    frame: Frame = Frame()
-                    frame.unpack(data)
-                    return frame, accept_flag
-            except Exception:
-                print(f"{self.__port_name}: Reading failed")
+            # try:
+            if len(data) <= 5:
+                token: Token = Token()
+                token.unpack(data)
+                return token, accept_flag
+            else:
+                frame: Frame = Frame()
+                frame.unpack(data)
+                return frame, accept_flag
+            # except Exception:
+            #     print(f"{self.__port_name}: Reading failed")
         return Frame(), accept_flag
 
     def WritePacketToPort(self, obj):

@@ -1,24 +1,20 @@
 import struct
+from Token import Token
 
 
-# n = 8
 class Frame:
 
-    def __init__(self, data_maxsize=15):
-        self.__data_maxsize = data_maxsize
-
+    def __init__(self):
         # Initializing fields
-        self.__start_delim = 0
-        self.__access_control = 0
-        self.__frame_control = 0
-        self.__dest_addr = 0 & 0xFFFFFFFF
-        self.__source_addr = 0 & 0xFFFFFFFF
+        self.__dest_addr = 0
+        self.__source_addr = 0
         self.__data = b""
-        self.__length = len(self.data)
-        self.__fcs = 0
-        self.__end_delim = 0
-        self.__frame_status = 0
-        self.__inter_frame_gap = 0
+        self.__length = len(self.__data)
+        # TOKEN
+        self.__token_source_addr = 0
+        self.__token_priority = 0
+        self.__token_reserv_priority = 0
+        self.__id = 1
 
     @property
     def data(self):
@@ -45,34 +41,33 @@ class Frame:
     def source_addr(self, source_addr: int):
         self.__source_addr = source_addr
 
-    def updateFS_bitA(self):
-        self.__frame_status = self.__frame_status | (1 << 0)
-        self.__frame_status = self.__frame_status | (1 << 4)
+    def to_token(self):
+        token: Token = Token()
+        token.sour_addr = self.__token_source_addr
+        token.res_prior = self.__token_reserv_priority
+        token.curr_prior = self.__token_priority
+        token.id = 0
+        return token
 
-    def updateFS_bitC(self):
-        self.__frame_status = self.__frame_status | (1 << 1)
-        self.__frame_status = self.__frame_status | (1 << 5)
-
-    def update_frame_status(self):
-        self.updateFS_bitA()
-        self.updateFS_bitC()
+    def from_token(self, token):
+        self.__token_source_addr = token.sour_addr
+        self.__token_priority = token.curr_prior
+        self.__token_reserv_priority = token.res_prior
+        self.__id = 1
 
     def pack(self):
-        format_string = 'BBBII{}sBBBBB'.format(self.__length)
+        format_string = 'ii{}sbbbbb'.format(self.__length)
 
         return struct.pack(format_string,
-                           self.__start_delim,
-                           self.__access_control,
-                           self.__frame_control,
                            self.dest_addr,
                            self.source_addr,
                            self.__data,
                            self.__length,
-                           self.__fcs,
-                           self.__end_delim,
-                           self.__frame_status,
-                           self.__inter_frame_gap)
+                           self.__token_source_addr,
+                           self.__token_priority,
+                           self.__token_reserv_priority,
+                           self.__id)
 
     def unpack(self, data):
-        format_string = 'BBBII{}sBBBBB'.format(len(data) - 17)
-        self.__start_delim, self.__access_control, self.__frame_control, self.__dest_addr, self.__source_addr, self.__data, self.__length, self.__fcs, self.__end_delim, self.__frame_status, self.__inter_frame_gap = struct.unpack(format_string, data)
+        format_string = 'ii{}sbbbbb'.format(len(data) - 13)
+        self.__dest_addr, self.__source_addr, self.__data, self.__length, self.__token_source_addr, self.__token_priority, self.__token_reserv_priority, self.__id = struct.unpack(format_string, data)

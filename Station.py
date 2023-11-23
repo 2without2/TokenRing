@@ -8,7 +8,7 @@ import threading
 
 class Station:
     def __init__(self, number: int, input_port: str, output_port: str, communicator: DebugCommunicator,
-                 function, priority: int = 1):
+                 function, function1, priority: int = 1):
         # var
         self.input_port: COMPort = COMPort(input_port)
         self.output_port: COMPort = COMPort(output_port)
@@ -22,6 +22,7 @@ class Station:
 
         self.debug_communicator = communicator
         self.callback_function = function
+        self.callback_function1 = function1
 
     @property
     def number(self):
@@ -33,7 +34,7 @@ class Station:
 
     @property
     def address(self):
-        return self.__number
+        return self.__address
 
     @address.setter
     def address(self, address: int):
@@ -69,6 +70,9 @@ class Station:
     def update_info(self, text: str):
         self.callback_function(text)
 
+    def update_package_count(self):
+        self.callback_function1()
+
     def initStation(self):
         self.input_port.SetParamCOMPort()
         self.output_port.SetParamCOMPort()
@@ -78,40 +82,35 @@ class Station:
         self.input_port.CloseCOMPort()
         self.output_port.CloseCOMPort()
 
-    # input_port
-    def send_data(self, data: str):
-        frame = Frame()
-        frame.data = data
-        frame.source_addr = self.__number
-        frame.dest_addr = self.__address
-        self.input_port.WritePacketToPort(frame)
-        self.logger(f"The package was sent to Station #{self.__address}", 2)
-
-    # output_port
-    def accept_data(self):
-        thread = threading.Thread(target=self.thread_accept_packet)
-        thread.daemon = True
-        thread.start()
-
     def send_token(self):
         token: Token = Token()
         token.curr_prior = self.__priority
         token.sour_addr = self.__number
-        token.pack()
         self.input_port.WritePacketToPort(token)
         self.logger(f"The token was sent to Station #{self.__address}", 2)
 
     def parse_frame(self, frame):
+
+        print(f"Station #{self.__number}: Frame source_addr = {frame.source_addr}")
+        print(f"Station #{self.__number}: Frame dest_addr = {frame.dest_addr}")
+        print(f"Station #{self.__number}: Frame data = {frame.data}")
+
         if frame.dest_addr == self.__number:
             if frame.source_addr == self.__number:
-                self.logger(f"The package has been deleted", 2)
-            else:  # тут мы обрабатываем dest_addr
+                self.logger(f"Frame to token", 2)
+                self.logger(f"The package has been deleted1", 2)
+                token = frame.to_token()
+                self.send_data(token)
+            else:
                 self.logger(f"Accept package", 2)
                 self.logger(f"Send package to next station", 2)
                 self.input_port.WritePacketToPort(frame)
             self.update_info(frame.data)
         elif frame.source_addr == self.__number:
-            self.logger(f"The package has been deleted", 2)
+            self.logger(f"Frame to token", 2)
+            self.logger(f"The package has been deleted2", 2)
+            token = frame.to_token()
+            self.send_data(token)
         else:
             self.logger(f"Send package to next station", 2)
             self.input_port.WritePacketToPort(frame)
@@ -119,13 +118,37 @@ class Station:
     def parse_token(self, token):
         if token.sour_addr == self.__number:
             if self.init_token:
-                self.logger("Send token to next station", 2)
-                self.input_port.WritePacketToPort(token)
+                self.send_data(token)
             else:
                 self.logger("The token has been deleted", 2)
         else:
+            self.send_data(token)
+
+    def send_data(self, token):
+
+        if self.buffer.count() == 0:
+            self.logger("Buffer is empty", 1)
             self.logger("Send token to next station", 2)
             self.input_port.WritePacketToPort(token)
+        elif token.curr_prior > self.__priority:
+            self.logger("The priority of this station is small", 1)
+            self.logger("Send token to next station", 2)
+            self.input_port.WritePacketToPort(token)
+        if self.buffer.count() > 0 and self.__priority >= token.curr_prior:
+            frame: Frame = Frame()
+            frame.from_token(token)
+            frame.source_addr = self.__number
+            frame.dest_addr = self.__address
+            frame.data = self.buffer.pop()
+            self.update_package_count()
+            self.logger("Token to Frame", 2)
+            self.logger(f"Send package with data to Station #{frame.dest_addr}", 2)
+            self.input_port.WritePacketToPort(frame)
+
+    def accept_data(self):
+        thread = threading.Thread(target=self.thread_accept_packet)
+        thread.daemon = True
+        thread.start()
 
     def thread_accept_packet(self):
         while True:
@@ -140,4 +163,3 @@ class Station:
                         print("Error Token/Frame")
                 except Exception:
                     print("Unknown exception!!!")
-

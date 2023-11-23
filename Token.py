@@ -3,12 +3,11 @@ import struct
 
 class Token:
 
-    def __init__(self, req_prior=1):
-        self.__start_delim = 0
+    def __init__(self, res_prior=1):
         self.__curr_prior = 0
         self.__sour_addr = 0
-        self.__req_prior = req_prior
-        self.__end_delim = 0
+        self.__res_prior = res_prior
+        self.__id = 0
 
     @property
     def curr_prior(self):
@@ -27,24 +26,30 @@ class Token:
         self.__sour_addr = value
 
     @property
-    def req_prior(self):
-        return self.__req_prior
+    def res_prior(self):
+        return self.__res_prior
 
-    @req_prior.setter
-    def req_prior(self, value):
-        self.__req_prior = value
+    @res_prior.setter
+    def res_prior(self, value):
+        self.__res_prior = value
+
+    @property
+    def id(self):
+        return self.__id
+
+    @id.setter
+    def id(self, value):
+        self.__id = value
 
     def pack(self):
-        format_string = 'BBBBB'.format()
+        format_string = 'BBBB'.format()
         return struct.pack(format_string,
-                           self.__start_delim,
                            self.__curr_prior,
                            self.__sour_addr,
-                           self.__req_prior,
-                           self.__end_delim)
+                           self.__res_prior,
+                           self.__id)
 
     def unpack(self, data):
-        format_string = 'BBBBB'.format()
-        self.__start_delim, self.__curr_prior, self.__sour_addr, self.__req_prior, self.__end_delim \
-            = struct.unpack(format_string, data)
+        format_string = 'BBBB'.format()
+        self.__curr_prior, self.__sour_addr, self.__res_prior, self.__id = struct.unpack(format_string, data)
 

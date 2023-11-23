@@ -12,7 +12,8 @@ class StationWindow(QWidget):
         self.UI = StationWindowUi()
         self.initUI(input_port, output_port, station_number)
         # VAR
-        self.station = Station(station_number, input_port, output_port, communicator, self.update_output_info)
+        self.station = Station(station_number, input_port, output_port, communicator, self.update_output_info,
+                               self.update_package_count)
 
     def initUI(self, input_port, output_port, station_number):
         self.UI.setupUi(self)
@@ -27,8 +28,8 @@ class StationWindow(QWidget):
     def update_output_info(self, text):
         self.UI.txt_output.append(text)
 
-    def update_package_count(self, number):
-        self.UI.lbl_package_count.setText(str(number))
+    def update_package_count(self):
+        self.UI.lbl_package_count.setText(str(self.station.buffer.count()))
 
     def get_station_number(self):
         try:
@@ -41,6 +42,7 @@ class StationWindow(QWidget):
                 self.station.logger(f"New station number is {number}", 1)
             else:
                 self.station.logger(f"The station number is already {self.station.number}", 1)
+
             self.station.number = number
         finally:
             self.UI.le_station_number.clear()
@@ -54,7 +56,7 @@ class StationWindow(QWidget):
             self.station.logger(e.what(), 1)
         else:
             self.station.address = address
-            self.station.logger(f"The address of the receiver station is {address}", 1)
+            self.station.logger(f"The address of the receiver station is {self.station.address}", 1)
 
     def get_priority(self):
         try:
@@ -64,7 +66,7 @@ class StationWindow(QWidget):
             pass
         else:
             self.station.priority = priority
-            self.station.logger(f"The station priority is {priority}", 1)
+            self.station.logger(f"The station priority is {self.station.priority}", 1)
 
     def get_message(self):
         try:
@@ -75,13 +77,11 @@ class StationWindow(QWidget):
             while True:
                 if len(text) < 15:
                     self.station.buffer.add(text)
-                    # self.station.send_data(text)
                     break
                 else:
                     text_part = text[0:15]
                     text = text.replace(text_part, "")
                     self.station.buffer.add(text_part)
-                    # self.station.send_data(text_part)
         finally:
             self.UI.txt_input.clear()
 
@@ -89,7 +89,7 @@ class StationWindow(QWidget):
         if obj == self.UI.txt_input and event.type() == event.KeyPress:
             if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                 self.get_message()
-                self.update_package_count(self.station.buffer.count())
+                self.update_package_count()
                 return True
 
         return super().eventFilter(obj, event)
